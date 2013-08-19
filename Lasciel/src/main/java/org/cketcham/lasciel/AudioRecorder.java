@@ -78,15 +78,17 @@ public class AudioRecorder extends Service {
         startNextRecording();
     }
 
+    private static int encoder = 0;
     private void resetRecorder() {
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
-        mRecorder.setOutputFile(getAudioFile());
+        int e = encoder++%4 + 1;
+        mRecorder.setAudioEncoder(e);
+        mRecorder.setOutputFile(getAudioFile(e));
         mRecorder.setMaxDuration(5 * 60 * 1000);
     }
 
-    private String getAudioFile() {
+    private String getAudioFile(int e) {
         Calendar c = Calendar.getInstance();
         File day = new File(getExternalCacheDir(), String.format("%d-%d-%d", c.get(Calendar.YEAR),
                 c.get(Calendar.MONTH) + 1, c.get(Calendar.DATE)));
@@ -97,7 +99,7 @@ public class AudioRecorder extends Service {
             name = day.list().length;
         }
 
-        return new File(day, name + ".mp4").toString();
+        return new File(day, name + "-"+e+".mp4").toString();
     }
 
     private void startNextRecording() {
