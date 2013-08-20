@@ -6,12 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaRecorder;
+import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by cketcham on 8/18/13.
@@ -61,46 +64,10 @@ public class AudioRecorder extends Service {
 
     private void initRecorder() {
         mRecorder = new MediaRecorder();
-        resetRecorder();
-        mRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
-
-            @Override
-            public void onInfo(MediaRecorder mr, int what, int extra) {
-                if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
-                    mr.stop();
-                    mr.reset();
-                    resetRecorder();
-                    startNextRecording();
-                }
-            }
-        });
-
-        startNextRecording();
-    }
-
-    private void resetRecorder() {
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
         mRecorder.setOutputFile(getAudioFile());
-        mRecorder.setMaxDuration(5 * 60 * 1000);
-    }
-
-    private String getAudioFile() {
-        Calendar c = Calendar.getInstance();
-        File day = new File(getExternalCacheDir(), String.format("%d-%d-%d", c.get(Calendar.YEAR),
-                c.get(Calendar.MONTH) + 1, c.get(Calendar.DATE)));
-        int name = 0;
-        if (!day.exists()) {
-            day.mkdirs();
-        } else {
-            name = day.list().length;
-        }
-
-        return new File(day, name + ".mp4").toString();
-    }
-
-    private void startNextRecording() {
         try {
             mRecorder.prepare();
             mRecorder.start();
@@ -111,5 +78,16 @@ public class AudioRecorder extends Service {
             Log.e(TAG, "error starting next recording", e);
             stopSelf();
         }
+    }
+
+    private String getAudioFile() {
+        File dir = new File(Environment.getExternalStorageDirectory(), "Laciel");
+
+        if(!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        String name = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        return new File(dir, name + ".mp4").toString();
     }
 }
