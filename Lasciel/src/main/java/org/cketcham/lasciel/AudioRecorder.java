@@ -2,8 +2,10 @@ package org.cketcham.lasciel;
 
 import android.app.Notification;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.Environment;
@@ -13,7 +15,6 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -23,6 +24,27 @@ public class AudioRecorder extends Service {
     private static final String TAG = "AudioRecorder";
     private static boolean mRunning;
     private MediaRecorder mRecorder;
+    private AudioManager am;
+    private BroadcastReceiver bluetoothStateReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+            Log.d(TAG, "Audio SCO state: " + state);
+
+            if (AudioManager.SCO_AUDIO_STATE_CONNECTED == state) {
+                if(mRecorder == null) {
+                    initRecorder();
+                }
+            } else if (AudioManager.SCO_AUDIO_STATE_DISCONNECTED == state) {
+                if (mRecorder != null) {
+                    mRecorder.stop();
+                    mRecorder.release();
+                    mRecorder = null;
+                }
+            }
+        }
+    };
 
     public AudioRecorder() {
     }
@@ -53,12 +75,21 @@ public class AudioRecorder extends Service {
             mRecorder.release();
             mRecorder = null;
         }
+
+        am.stopBluetoothSco();
+        unregisterReceiver(bluetoothStateReceiver);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        initRecorder();
+
+        registerReceiver(bluetoothStateReceiver,
+                new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
+
+        am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        am.startBluetoothSco();
+
         return START_STICKY;
     }
 
