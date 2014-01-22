@@ -1,5 +1,18 @@
-local.properties
+# Ignored by AndroidStudio
+*.iws
+*.iml
+.idea/modules.xml
+
+# Folders related to builds
+.gradle/
+*/build/
+
+# Local settings
 .idea/workspace.xml
-.idea/tasks.xml
-build
-.gradle
+local.properties
+
+# User dictionaries
+.idea/dictionaries/
+
+# libraries
+.idea/libraries/
